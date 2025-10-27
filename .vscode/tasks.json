@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build (Debug)",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "build",
+      ],
+      "icon": {
+        "color": "terminal.ansiGreen",
+        "id": "debug"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": ["$rustc"]
+    },
+    {
+      "label": "Build (Release)",
+      "type": "cargo",
+      "command": "build",
+      "args": [
+        "--release"
+      ],
+      "icon": {
+        "color": "terminal.ansiGreen",
+        "id": "rocket"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$rustc"],
+    }
+  ]
+}

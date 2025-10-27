@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "name": "Run (Debug)",
+      "preLaunchTask": "Build (Debug)",
+      "program": "${workspaceFolder}/target/debug/rust-opengl.exe",
+      "request": "launch",
+      "type": "lldb",
+    },
+    {
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "name": "Run (Release)",
+      "preLaunchTask": "Build (Release)",
+      "program": "${workspaceFolder}/target/release/rust-opengl.exe",
+      "request": "launch",
+      "type": "lldb",
+    },
+  ]
+}
