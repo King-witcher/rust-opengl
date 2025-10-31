@@ -1,7 +1,6 @@
 use crate::{
     FilterMode, Texture, TextureCreateInfo, TextureFormat,
     archive::EngineArchive,
-    file_system::load_file_system,
     model::{Model, ModelCreateInfo, Polygon, Vertex},
     shader_program::{self, ShaderProgram, ShaderProgramCreateInfo},
     window,

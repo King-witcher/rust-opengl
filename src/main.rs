@@ -4,7 +4,6 @@ extern crate sdl2;
 
 mod archive;
 mod engine;
-mod file_system;
 mod model;
 mod shader_program;
 mod texture;
