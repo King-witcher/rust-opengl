@@ -13,7 +13,7 @@ pub struct Model {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct Vertex {
-    pub position: [f32; 2],
+    pub position: [f32; 3],
     pub color: [f32; 3],
     pub tex_coords: [f32; 2],
 }
@@ -108,7 +108,7 @@ impl Model {
         vec![
             AttributeDescription {
                 location: 0,
-                components: 2,
+                components: 3,
                 data_type: gl::GL_FLOAT,
                 stride: std::mem::size_of::<Vertex>(),
                 offset: std::mem::offset_of!(Vertex, position),

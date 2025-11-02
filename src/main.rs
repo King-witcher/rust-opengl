@@ -12,6 +12,6 @@ mod window;
 pub use texture::*;
 
 fn main() {
-    let engine = engine::KEngine::new(1600, 900, "Rust OpenGL Window").unwrap();
+    let engine = engine::KEngine::new(1920, 1080, "Rust OpenGL Window").unwrap();
     engine.run();
 }

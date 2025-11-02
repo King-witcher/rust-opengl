@@ -1,7 +1,8 @@
 mod shader;
 
 use gl::*;
-use std::rc::Rc;
+use nalgebra_glm::Mat4;
+use std::{ffi::CString, rc::Rc};
 
 pub use shader::ShaderSourceType;
 
@@ -50,6 +51,21 @@ impl ShaderProgram {
 
     pub fn use_program(&self) {
         self.gl.UseProgram(self.program_id);
+    }
+
+    pub fn uniform_location(&self, name: &str) -> i32 {
+        unsafe {
+            let cname = CString::new(name).unwrap();
+            self.gl
+                .GetUniformLocation(self.program_id, cname.as_ptr() as _)
+        }
+    }
+
+    pub fn set_uniform_mat_4(&self, location: i32, value: Mat4) {
+        unsafe {
+            let ptr = &value as *const Mat4 as *const f32;
+            self.gl.UniformMatrix4fv(location, 1, 0, ptr);
+        }
     }
 
     fn create_gl_shader_program(

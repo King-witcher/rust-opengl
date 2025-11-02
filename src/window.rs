@@ -1,3 +1,5 @@
+use sdl2::video::gl_attr::GLAttr;
+
 pub struct KWindow {
     sdl_context: sdl2::Sdl,
     _sdl_video: sdl2::VideoSubsystem,
@@ -24,6 +26,8 @@ impl KWindow {
 
         let sdl_window = _sdl_video
             .window(create_info.title, create_info.width, create_info.height)
+            .position(-1800, 100)
+            .fullscreen_desktop()
             .opengl()
             .build()
             .expect("Failed to create SDL2 window");
@@ -31,6 +35,10 @@ impl KWindow {
         let _gl_context = sdl_window
             .gl_create_context()
             .expect("Failed to create OpenGL context");
+
+        _sdl_video
+            .gl_set_swap_interval(0)
+            .expect("Failed to disable vsync");
 
         KWindow {
             sdl_context,

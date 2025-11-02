@@ -8,6 +8,7 @@ use crate::{
 use anyhow::Result;
 use gl::*;
 use image::ImageBuffer;
+use nalgebra_glm::{self as glm, Mat4};
 use std::{ffi::CStr, rc::Rc};
 
 pub struct KEngine {
@@ -54,7 +55,7 @@ impl KEngine {
 
         let main_texture = Texture::from(TextureCreateInfo {
             gl: gl.clone(),
-            rgba_image: load_image_from_archive(&archive, "bianca.png")?,
+            rgba_image: load_image_from_archive(&archive, "bianca.jpg")?,
             internal_format: TextureFormat::RGBA,
             mip_level: 0,
             wrap_s: crate::texture::WrapMode::Repeat,
@@ -64,7 +65,7 @@ impl KEngine {
             mipmap_interpolation: Some(FilterMode::Linear),
         });
 
-        let model = Self::load_models(gl.clone());
+        let model = Self::load_cube(gl.clone());
 
         Ok(KEngine {
             gl,
@@ -81,8 +82,20 @@ impl KEngine {
             self.model.bind();
             self.shader_program.use_program();
 
+            let mut model_mat = glm::rotate(
+                &Mat4::identity(),
+                45.0f32.to_radians(),
+                &glm::vec3(1.0, 0.0, 0.0),
+            );
+            let view_mat = glm::translate(&Mat4::identity(), &glm::vec3(0.0, 0.0, -3.0));
+            let proj_mat = glm::perspective(16.0 / 9.0, 60.0f32.to_radians(), 0.1, 100.0);
+
+            self.shader_program.set_uniform_mat_4(1, view_mat);
+            self.shader_program.set_uniform_mat_4(2, proj_mat);
+
             let mut event_pump = self.window.event_pump();
-            self.gl.ClearColor(0.2, 0.3, 0.4, 1.0);
+            self.gl.ClearColor(0.2, 0.1, 0.3, 1.0);
+            self.gl.Enable(GL_DEPTH_TEST);
             self.main_texture.bind(0);
 
             'main_loop: loop {
@@ -93,6 +106,9 @@ impl KEngine {
                     }
                 }
 
+                model_mat = glm::rotate(&model_mat, 0.1f32.to_radians(), &glm::vec3(0.0, 1.0, 0.0));
+                self.shader_program.set_uniform_mat_4(0, model_mat);
+
                 self.draw_frame();
             }
         }
@@ -101,6 +117,7 @@ impl KEngine {
     fn draw_frame(&self) {
         unsafe {
             self.gl.Clear(GL_COLOR_BUFFER_BIT);
+            self.gl.Clear(GL_DEPTH_BUFFER_BIT);
             self.gl.DrawElements(
                 GL_TRIANGLES,
                 self.model.vertex_count() as i32,
@@ -111,26 +128,64 @@ impl KEngine {
         }
     }
 
-    fn load_models(gl: Rc<GlFns>) -> Model {
+    fn load_cube(gl: Rc<GlFns>) -> Model {
         let vertices = vec![
             Vertex {
-                position: [-1.0, -1.0],
+                position: [-1.0, -1.0, 1.0],
                 color: [1.0, 0.0, 0.0],
-                tex_coords: [0.3, 0.7],
+                tex_coords: [0.0, 1.0],
             },
             Vertex {
-                position: [0.0, 1.0],
-                color: [0.0, 1.0, 0.0],
-                tex_coords: [0.5, 0.3],
+                position: [-1.0, 1.0, 1.0],
+                color: [1.0, 0.0, 0.0],
+                tex_coords: [0.0, 0.0],
             },
             Vertex {
-                position: [1.0, -1.0],
-                color: [0.0, 0.0, 1.0],
-                tex_coords: [0.7, 0.7],
+                position: [1.0, 1.0, 1.0],
+                color: [1.0, 0.0, 0.0],
+                tex_coords: [1.0, 0.0],
+            },
+            Vertex {
+                position: [1.0, -1.0, 1.0],
+                color: [1.0, 0.0, 0.0],
+                tex_coords: [1.0, 1.0],
+            },
+            Vertex {
+                position: [-1.0, -1.0, -1.0],
+                color: [1.0, 0.0, 0.0],
+                tex_coords: [0.0, 0.0],
+            },
+            Vertex {
+                position: [-1.0, 1.0, -1.0],
+                color: [1.0, 0.0, 0.0],
+                tex_coords: [0.0, 1.0],
+            },
+            Vertex {
+                position: [1.0, 1.0, -1.0],
+                color: [1.0, 0.0, 0.0],
+                tex_coords: [1.0, 1.0],
+            },
+            Vertex {
+                position: [1.0, -1.0, -1.0],
+                color: [1.0, 0.0, 0.0],
+                tex_coords: [1.0, 0.0],
             },
         ];
 
-        let polygons = vec![Polygon { indices: [0, 1, 2] }];
+        let polygons = vec![
+            Polygon { indices: [0, 1, 2] },
+            Polygon { indices: [2, 3, 0] },
+            Polygon { indices: [4, 5, 6] },
+            Polygon { indices: [6, 7, 4] },
+            Polygon { indices: [0, 4, 7] },
+            Polygon { indices: [7, 3, 0] },
+            Polygon { indices: [1, 5, 6] },
+            Polygon { indices: [6, 2, 1] },
+            Polygon { indices: [1, 0, 4] },
+            Polygon { indices: [4, 5, 1] },
+            Polygon { indices: [3, 2, 6] },
+            Polygon { indices: [6, 7, 3] },
+        ];
 
         let create_info = ModelCreateInfo {
             gl,
