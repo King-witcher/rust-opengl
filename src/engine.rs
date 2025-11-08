@@ -76,7 +76,7 @@ impl KEngine {
                 fov: 90.0,
                 aspect: 16.0 / 9.0,
             },
-            far: 1000000000.0,
+            far: 10.0,
             near: 0.1,
             position: glm::vec3(0.0, 0.0, 4.0),
         });
@@ -97,8 +97,10 @@ impl KEngine {
     pub fn run(&mut self) {
         unsafe {
             let mut event_pump = self.window.event_pump();
-            self.gl.ClearColor(0.2, 0.1, 0.3, 1.0);
+            // self.gl.ClearColor(0.05, 0.05, 0.05, 1.0);
             self.gl.Enable(GL_DEPTH_TEST);
+            self.gl.Enable(GL_BLEND);
+            self.gl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
             'main_loop: loop {
                 for event in event_pump.poll_iter() {
@@ -114,7 +116,7 @@ impl KEngine {
                 }
                 let rotation = glm::rotate(
                     &Mat4::identity(),
-                    0.05f32.to_radians(),
+                    0.01f32.to_radians(),
                     &glm::vec3(1.0, 1.0, 1.0),
                 );
                 let model = &mut self.scene.models[0];
@@ -137,17 +139,17 @@ impl KEngine {
         let vertices = vec![
             Vertex {
                 position: [-1.0, -1.0, 1.0],
-                color: [1.0, 0.0, 0.0],
+                color: [0.0, 0.0, 1.0],
                 tex_coords: [0.0, 1.0],
             },
             Vertex {
                 position: [-1.0, 1.0, 1.0],
-                color: [1.0, 0.0, 0.0],
+                color: [0.0, 1.0, 0.0],
                 tex_coords: [0.0, 0.0],
             },
             Vertex {
                 position: [1.0, 1.0, 1.0],
-                color: [1.0, 0.0, 0.0],
+                color: [0.0, 1.0, 1.0],
                 tex_coords: [1.0, 0.0],
             },
             Vertex {
@@ -157,22 +159,22 @@ impl KEngine {
             },
             Vertex {
                 position: [-1.0, -1.0, -1.0],
-                color: [1.0, 0.0, 0.0],
+                color: [1.0, 0.0, 1.0],
                 tex_coords: [0.0, 0.0],
             },
             Vertex {
                 position: [-1.0, 1.0, -1.0],
-                color: [1.0, 0.0, 0.0],
+                color: [1.0, 1.0, 0.0],
                 tex_coords: [0.0, 1.0],
             },
             Vertex {
                 position: [1.0, 1.0, -1.0],
-                color: [1.0, 0.0, 0.0],
+                color: [1.0, 1.0, 1.0],
                 tex_coords: [1.0, 1.0],
             },
             Vertex {
                 position: [1.0, -1.0, -1.0],
-                color: [1.0, 0.0, 0.0],
+                color: [0.0, 0.0, 0.0],
                 tex_coords: [1.0, 0.0],
             },
         ];

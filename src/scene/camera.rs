@@ -1,8 +1,14 @@
 use nalgebra_glm::{self as glm, Mat4, Vec3};
 
 pub struct Camera {
-    pub view_matrix: Mat4,
-    pub projection_matrix: Mat4,
+    camera_matrix: Mat4,
+    projection_matrix: Mat4,
+
+    position: Vec3,
+
+    yaw: f32,
+    pitch: f32,
+    bob: f32,
 }
 
 pub enum CameraType {
@@ -26,11 +32,59 @@ pub struct CameraCreateInfo {
 }
 
 impl Camera {
-    pub fn new(view_matrix: Mat4, projection_matrix: Mat4) -> Self {
-        Camera {
-            view_matrix,
-            projection_matrix,
-        }
+    const UP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+
+    pub fn get_camera_matrix(&self) -> &Mat4 {
+        &self.camera_matrix
+    }
+
+    pub fn get_position(&self) -> &Vec3 {
+        &self.position
+    }
+
+    pub fn get_yaw(&self) -> f32 {
+        self.yaw
+    }
+
+    pub fn get_pitch(&self) -> f32 {
+        self.pitch
+    }
+
+    pub fn get_bob(&self) -> f32 {
+        self.bob
+    }
+
+    pub fn set_position(&mut self, position: Vec3) {
+        self.position = position;
+        self.update_camera_matrix();
+    }
+
+    pub fn set_yaw(&mut self, yaw: f32) {
+        self.yaw = yaw;
+        self.update_camera_matrix();
+    }
+
+    pub fn set_pitch(&mut self, pitch: f32) {
+        self.pitch = pitch;
+        self.update_camera_matrix();
+    }
+
+    pub fn set_bob(&mut self, bob: f32) {
+        self.bob = bob;
+        self.update_camera_matrix();
+    }
+
+    #[inline]
+    fn update_camera_matrix(&mut self) {
+        let direction = Vec3::new(
+            self.yaw.to_radians().cos() * self.pitch.to_radians().cos(),
+            self.pitch.to_radians().sin(),
+            self.yaw.to_radians().sin() * self.pitch.to_radians().cos(),
+        )
+        .normalize();
+
+        let view = glm::look_at(&self.position, &(self.position + direction), &Self::UP);
+        self.camera_matrix = self.projection_matrix * view;
     }
 }
 
@@ -42,8 +96,6 @@ impl From<CameraCreateInfo> for Camera {
             near,
             far,
         } = create_info;
-
-        let view_matrix = glm::translate(&Mat4::identity(), &-position);
 
         let projection_matrix = match camera_type {
             CameraType::Perspective { fov, aspect } => {
@@ -61,9 +113,17 @@ impl From<CameraCreateInfo> for Camera {
             } => glm::ortho(left, right, bottom, top, near, far),
         };
 
-        Camera {
-            view_matrix,
+        let mut camera = Camera {
+            camera_matrix: Mat4::identity(),
             projection_matrix,
-        }
+            position,
+            yaw: -90.0,
+            pitch: 0.0,
+            bob: 0.0,
+        };
+
+        camera.update_camera_matrix();
+
+        camera
     }
 }

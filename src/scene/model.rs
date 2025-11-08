@@ -17,8 +17,7 @@ pub struct Model {
     texture: Rc<Texture>,
     shader_program: Rc<ShaderProgram>,
     model_location: i32,
-    view_location: i32,
-    projection_location: i32,
+    camera_location: i32,
 }
 
 #[repr(C)]
@@ -104,8 +103,7 @@ impl Model {
             }
 
             let model_location = shader_program.uniform_location("model");
-            let view_location = shader_program.uniform_location("view");
-            let projection_location = shader_program.uniform_location("projection");
+            let camera_location = shader_program.uniform_location("camera");
 
             Self {
                 gl,
@@ -117,18 +115,13 @@ impl Model {
                 model_matrix,
                 shader_program,
                 model_location,
-                view_location,
-                projection_location,
+                camera_location,
             }
         }
     }
 
     pub fn bind(&self) {
         self.gl.BindVertexArray(self.vao);
-    }
-
-    pub fn model_matrix(&self) -> &Mat4 {
-        &self.model_matrix
     }
 
     pub fn rotate(&mut self, rotation: &Mat4) {
@@ -143,9 +136,7 @@ impl Model {
         self.shader_program
             .set_uniform_mat_4(self.model_location, self.model_matrix);
         self.shader_program
-            .set_uniform_mat_4(self.view_location, camera.view_matrix);
-        self.shader_program
-            .set_uniform_mat_4(self.projection_location, camera.projection_matrix);
+            .set_uniform_mat_4(self.camera_location, *camera.get_camera_matrix());
 
         unsafe {
             self.gl.DrawElements(
