@@ -136,7 +136,7 @@ impl Model {
         self.shader_program
             .set_uniform_mat_4(self.model_location, self.model_matrix);
         self.shader_program
-            .set_uniform_mat_4(self.camera_location, *camera.get_camera_matrix());
+            .set_uniform_mat_4(self.camera_location, camera.camera_matrix());
 
         unsafe {
             self.gl.DrawElements(

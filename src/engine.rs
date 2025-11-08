@@ -13,8 +13,13 @@ use anyhow::Result;
 use gl::*;
 use image::ImageBuffer;
 use nalgebra_glm::{self as glm, Mat4};
-use sdl2::{event::Event, keyboard::Keycode};
-use std::{ffi::CStr, rc::Rc};
+use sdl2::{
+    event::Event,
+    keyboard::{Keycode, Scancode},
+};
+use std::{ffi::CStr, rc::Rc, time::Instant};
+
+pub mod input;
 
 pub struct KEngine {
     window: window::KWindow,
@@ -58,7 +63,7 @@ impl KEngine {
 
         let main_texture = Texture::from(TextureCreateInfo {
             gl: gl.clone(),
-            rgba_image: load_image_from_archive(&archive, "bianca.jpg")?,
+            rgba_image: load_image_from_archive(&archive, "bianca.png")?,
             internal_format: TextureFormat::RGBA,
             mip_level: 0,
             wrap_s: crate::texture::WrapMode::Repeat,
@@ -76,7 +81,7 @@ impl KEngine {
                 fov: 90.0,
                 aspect: 16.0 / 9.0,
             },
-            far: 10.0,
+            far: 1000.0,
             near: 0.1,
             position: glm::vec3(0.0, 0.0, 4.0),
         });
@@ -96,33 +101,67 @@ impl KEngine {
 
     pub fn run(&mut self) {
         unsafe {
-            let mut event_pump = self.window.event_pump();
             // self.gl.ClearColor(0.05, 0.05, 0.05, 1.0);
             self.gl.Enable(GL_DEPTH_TEST);
             self.gl.Enable(GL_BLEND);
             self.gl.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            'main_loop: loop {
-                for event in event_pump.poll_iter() {
-                    match event {
-                        Event::Quit { .. } => break 'main_loop,
-                        Event::KeyDown { keycode, .. } => {
-                            if let Some(Keycode::Escape) = keycode {
-                                break 'main_loop;
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                let rotation = glm::rotate(
-                    &Mat4::identity(),
-                    0.01f32.to_radians(),
-                    &glm::vec3(1.0, 1.0, 1.0),
-                );
-                let model = &mut self.scene.models[0];
-                model.rotate(&rotation);
+            self.window.set_relative_mouse_mode(true);
+
+            let mut input = input::Input::new();
+            let mut event_pump = self.window.event_pump();
+
+            let mut last_frame = Instant::now();
+            let mut delta_time;
+            loop {
                 self.draw_frame();
+
+                let events = event_pump.poll_iter();
+                input.update(events);
+                if input.exit {
+                    break;
+                }
+
+                delta_time = last_frame.elapsed().as_secs_f32();
+                last_frame = Instant::now();
+
+                self.process_input(&mut input, delta_time);
+
+                if input.exit {
+                    break;
+                }
             }
+        }
+    }
+
+    fn process_input(&mut self, input: &mut input::Input, delta_time: f32) {
+        if input.was_key_pressed(Scancode::Escape) {
+            input.exit = true;
+        }
+
+        let camera = &mut self.scene.camera;
+
+        let mouse_rel = input.mouse_rel();
+        let delta_yaw = mouse_rel.0 as f32 * 0.022 * 2.2;
+        let delta_pitch = -mouse_rel.1 as f32 * 0.022 * 2.2;
+        camera.rotate(delta_yaw, delta_pitch);
+
+        if input.is_key_down(Scancode::W) {
+            camera.translate(camera.direction() * delta_time * 5.0);
+        }
+
+        if input.is_key_down(Scancode::S) {
+            camera.translate(-camera.direction() * delta_time * 5.0);
+        }
+
+        if input.is_key_down(Scancode::A) {
+            camera
+                .translate(-camera.direction().cross(&glm::vec3(0.0, 1.0, 0.0)) * delta_time * 5.0);
+        }
+
+        if input.is_key_down(Scancode::D) {
+            camera
+                .translate(camera.direction().cross(&glm::vec3(0.0, 1.0, 0.0)) * delta_time * 5.0);
         }
     }
 

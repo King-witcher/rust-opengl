@@ -1,14 +1,15 @@
 use nalgebra_glm::{self as glm, Mat4, Vec3};
 
 pub struct Camera {
-    camera_matrix: Mat4,
-    projection_matrix: Mat4,
-
     position: Vec3,
+    projection_matrix: Mat4,
 
     yaw: f32,
     pitch: f32,
     bob: f32,
+
+    camera_matrix: Mat4,
+    direction: Vec3,
 }
 
 pub enum CameraType {
@@ -34,24 +35,28 @@ pub struct CameraCreateInfo {
 impl Camera {
     const UP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 
-    pub fn get_camera_matrix(&self) -> &Mat4 {
-        &self.camera_matrix
+    pub fn camera_matrix(&self) -> Mat4 {
+        self.camera_matrix
     }
 
-    pub fn get_position(&self) -> &Vec3 {
-        &self.position
+    pub fn position(&self) -> Vec3 {
+        self.position
     }
 
-    pub fn get_yaw(&self) -> f32 {
+    pub fn yaw(&self) -> f32 {
         self.yaw
     }
 
-    pub fn get_pitch(&self) -> f32 {
+    pub fn pitch(&self) -> f32 {
         self.pitch
     }
 
-    pub fn get_bob(&self) -> f32 {
+    pub fn bob(&self) -> f32 {
         self.bob
+    }
+
+    pub fn direction(&self) -> Vec3 {
+        self.direction
     }
 
     pub fn set_position(&mut self, position: Vec3) {
@@ -65,7 +70,7 @@ impl Camera {
     }
 
     pub fn set_pitch(&mut self, pitch: f32) {
-        self.pitch = pitch;
+        self.pitch = pitch.clamp(-89.9, 89.9);
         self.update_camera_matrix();
     }
 
@@ -74,16 +79,28 @@ impl Camera {
         self.update_camera_matrix();
     }
 
+    pub fn translate(&mut self, delta: Vec3) {
+        self.position += delta;
+        self.update_camera_matrix();
+    }
+
+    pub fn rotate(&mut self, delta_yaw: f32, delta_pitch: f32) {
+        self.yaw += delta_yaw;
+        self.pitch += delta_pitch;
+        self.pitch = self.pitch.clamp(-89.9, 89.9);
+        self.update_camera_matrix();
+    }
+
     #[inline]
     fn update_camera_matrix(&mut self) {
-        let direction = Vec3::new(
+        self.direction = Vec3::new(
             self.yaw.to_radians().cos() * self.pitch.to_radians().cos(),
             self.pitch.to_radians().sin(),
             self.yaw.to_radians().sin() * self.pitch.to_radians().cos(),
         )
         .normalize();
 
-        let view = glm::look_at(&self.position, &(self.position + direction), &Self::UP);
+        let view = glm::look_at(&self.position, &(self.position + self.direction), &Self::UP);
         self.camera_matrix = self.projection_matrix * view;
     }
 }
@@ -115,6 +132,7 @@ impl From<CameraCreateInfo> for Camera {
 
         let mut camera = Camera {
             camera_matrix: Mat4::identity(),
+            direction: Vec3::new(0.0, 0.0, -1.0),
             projection_matrix,
             position,
             yaw: -90.0,

@@ -59,4 +59,8 @@ impl KWindow {
     pub fn swap_window(&self) {
         self.sdl_window.gl_swap_window();
     }
+
+    pub fn set_relative_mouse_mode(&self, enabled: bool) {
+        self.sdl_context.mouse().set_relative_mouse_mode(enabled);
+    }
 }
