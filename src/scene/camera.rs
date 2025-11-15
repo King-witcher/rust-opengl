@@ -87,7 +87,7 @@ impl Camera {
     pub fn rotate(&mut self, delta_yaw: f32, delta_pitch: f32) {
         self.yaw += delta_yaw;
         self.pitch += delta_pitch;
-        self.pitch = self.pitch.clamp(-89.9, 89.9);
+        self.pitch = self.pitch.clamp(-90.0, 90.0);
         // self.update_camera_matrix();
     }
 

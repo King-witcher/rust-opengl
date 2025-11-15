@@ -1,23 +1,21 @@
 use crate::{
     FilterMode, Texture, TextureCreateInfo, TextureFormat,
     archive::EngineArchive,
+    mygl,
     scene::{
         Scene, SceneCreateInfo,
         camera::{Camera, CameraCreateInfo, CameraType},
         model::{Model, ModelCreateInfo, Polygon, Vertex},
     },
-    shader_program::{self, ShaderProgram, ShaderProgramCreateInfo},
+    shader_program::{ShaderCode, ShaderProgram},
     window,
 };
-use anyhow::Result;
-use gl::*;
+use anyhow::{Result, anyhow};
+use gl46::*;
 use image::ImageBuffer;
-use nalgebra_glm::{self as glm, Mat4};
-use sdl2::{
-    event::Event,
-    keyboard::{Keycode, Scancode},
-};
-use std::{ffi::CStr, rc::Rc, time::Instant};
+use nalgebra_glm::{self as glm};
+use sdl2::keyboard::Scancode;
+use std::{rc::Rc, time::Instant};
 
 pub mod input;
 
@@ -36,33 +34,18 @@ impl KEngine {
             height,
         });
 
-        let load_function = |s: *const u8| unsafe {
-            let str = CStr::from_ptr(s as _)
-                .to_str()
-                .expect("Failed to convert CStr");
-            window.get_proc_address(str)
-        };
-
-        let gl = unsafe { GlFns::load_from(&load_function) };
-        let gl = gl.expect("Failed to load OpenGL functions");
-        let gl = Rc::new(gl);
+        mygl::load_fns(|s| window.get_proc_address(s)).unwrap();
 
         unsafe {
-            gl.Viewport(0, 0, width as i32, height as i32);
+            mygl::viewport(0, 0, width as i32, height as i32);
         }
 
         let archive = EngineArchive::new("base").expect("Failed to load base archive");
 
-        let shader_program = ShaderProgram::new(ShaderProgramCreateInfo {
-            gl: gl.clone(),
-            vertex_path: "base/shaders/vertex.vert.spv",
-            fragment_path: "base/shaders/fragment.frag.spv",
-            source_type: shader_program::ShaderSourceType::SPIRV,
-        });
+        let shader_program = create_shader_program().map_err(|e| anyhow!(e))?;
         let shader_program = Rc::new(shader_program);
 
         let main_texture = Texture::from(TextureCreateInfo {
-            gl: gl.clone(),
             rgba_image: load_image_from_archive(&archive, "container2.png")?,
             internal_format: TextureFormat::RGBA,
             mip_level: 0,
@@ -82,7 +65,7 @@ impl KEngine {
                 aspect: 16.0 / 9.0,
             },
             far: 1000.0,
-            near: 0.1,
+            near: 0.01,
             position: glm::vec3(0.0, 0.0, 0.0),
         });
 
@@ -166,6 +149,14 @@ impl KEngine {
         if input.is_key_down(Scancode::D) {
             camera.translate(right * delta_time * 5.0);
         }
+
+        if input.is_key_down(Scancode::Space) {
+            camera.translate(glm::vec3(0.0, 1.0, 0.0) * delta_time * 5.0);
+        }
+
+        if input.is_key_down(Scancode::LAlt) {
+            camera.translate(glm::vec3(0.0, -1.0, 0.0) * delta_time * 5.0);
+        }
     }
 
     fn draw_frame(&self) {
@@ -247,6 +238,16 @@ impl KEngine {
 
         Model::new(create_info)
     }
+}
+
+fn create_shader_program() -> Result<ShaderProgram, String> {
+    let vertex_binary = include_bytes!("../base/shaders/vertex.vert.spv");
+    let fragment_binary = include_bytes!("../base/shaders/fragment.frag.spv");
+
+    ShaderProgram::new(
+        ShaderCode::SPIRV(vertex_binary),
+        ShaderCode::SPIRV(fragment_binary),
+    )
 }
 
 fn load_image_from_archive(

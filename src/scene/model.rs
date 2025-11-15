@@ -130,7 +130,7 @@ impl Model {
 
     pub fn render(&self, camera: &Camera) {
         self.shader_program.use_program();
-        self.texture.bind(0);
+        self.texture.bind_to_unit(0);
         self.bind();
 
         self.shader_program
