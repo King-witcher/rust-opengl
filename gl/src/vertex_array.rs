@@ -5,6 +5,11 @@ pub struct VertexArray(u32);
 
 impl VertexArray {
     #[inline]
+    pub fn new() -> Self {
+        Self::create1()
+    }
+
+    #[inline]
     pub fn r#gen(n: isize) -> Vec<Self> {
         let mut arrays = vec![0; n as usize];
         unsafe {
@@ -23,6 +28,24 @@ impl VertexArray {
     }
 
     #[inline]
+    pub fn create(n: isize) -> Vec<Self> {
+        let mut arrays = vec![0; n as usize];
+        unsafe {
+            gl().CreateVertexArrays(n as _, arrays.as_mut_ptr());
+        }
+        arrays.into_iter().map(VertexArray).collect()
+    }
+
+    #[inline]
+    pub fn create1() -> Self {
+        let mut array = 0;
+        unsafe {
+            gl().CreateVertexArrays(1, &mut array);
+        }
+        VertexArray(array)
+    }
+
+    #[inline]
     pub fn id(&self) -> u32 {
         self.0
     }
@@ -30,6 +53,20 @@ impl VertexArray {
     #[inline]
     pub fn bind(&self) {
         gl().BindVertexArray(self.id());
+    }
+
+    #[inline]
+    pub fn enable_attrib(&mut self, index: u32) {
+        unsafe {
+            gl().EnableVertexArrayAttrib(self.id(), index);
+        }
+    }
+
+    #[inline]
+    pub fn disable_attrib(&self, index: u32) {
+        unsafe {
+            gl().DisableVertexArrayAttrib(self.id(), index);
+        }
     }
 
     #[inline]

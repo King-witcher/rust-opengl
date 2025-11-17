@@ -6,8 +6,8 @@ use nalgebra_glm::Mat4;
 use crate::{Texture, scene::camera::Camera, shader_program::ShaderProgram};
 
 pub struct Model {
-    vbo: gl::Buffer,
-    ebo: gl::Buffer,
+    // vbo: gl::Buffer,
+    // ebo: gl::Buffer,
     vertex_array: gl::VertexArray,
     vertex_count: i32,
     model_matrix: Mat4,
@@ -47,6 +47,10 @@ struct AttributeDescription {
     pub offset: usize,
 }
 
+pub trait IModel {
+    fn attribute_descriptions() -> Vec<AttributeDescription>;
+}
+
 impl Model {
     pub fn new(create_info: ModelCreateInfo) -> Self {
         let ModelCreateInfo {
@@ -59,33 +63,21 @@ impl Model {
 
         let vertex_count = (polygons.len() * 3) as i32;
 
-        let vao = gl::VertexArray::gen1();
-        let vbo = gl::Buffer::gen1();
-        let ebo = gl::Buffer::gen1();
+        let mut vertex_array = gl::VertexArray::gen1();
+        let mut array_buffer = gl::Buffer::gen1();
+        let mut element_buffer = gl::Buffer::gen1();
 
-        vao.bind();
-        vbo.bind(gl::BufferTarget::ArrayBuffer);
-        ebo.bind(gl::BufferTarget::ElementArrayBuffer);
+        vertex_array.bind();
+        array_buffer.bind(gl::BufferTarget::ArrayBuffer);
+        element_buffer.bind(gl::BufferTarget::ElementArrayBuffer);
 
-        vbo.named_buffer_storage(vertices, gl::BufferUsage::StaticDraw);
-        ebo.named_buffer_storage(polygons, gl::BufferUsage::StaticDraw);
-
-        // gl::buffer_data(
-        //     gl::BufferTarget::ArrayBuffer,
-        //     vertices,
-        //     gl::BufferUsage::StaticDraw,
-        // );
-
-        // gl::buffer_data(
-        //     gl::BufferTarget::ElementArrayBuffer,
-        //     polygons,
-        //     gl::BufferUsage::StaticDraw,
-        // );
+        array_buffer.storage(vertices, gl::BufferUsage::StaticDraw);
+        element_buffer.storage(polygons, gl::BufferUsage::StaticDraw);
 
         let attribute_descriptions = Self::default_attribute_descriptions();
 
         for attr in attribute_descriptions.iter() {
-            gl::enable_vertex_attrib_array(attr.location);
+            vertex_array.enable_attrib(attr.location);
             unsafe {
                 gl::vertex_attrib_pointer(
                     attr.location,
@@ -102,9 +94,9 @@ impl Model {
         let camera_location = shader_program.uniform_location("camera");
 
         Self {
-            vbo,
-            ebo,
-            vertex_array: vao,
+            // vbo: array_buffer,
+            // ebo: element_buffer,
+            vertex_array,
             texture,
             vertex_count,
             model_matrix,
