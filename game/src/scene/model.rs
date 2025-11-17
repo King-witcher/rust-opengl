@@ -6,8 +6,8 @@ use nalgebra_glm::Mat4;
 use crate::{Texture, scene::camera::Camera, shader_program::ShaderProgram};
 
 pub struct Model {
-    // vbo: gl::Buffer,
-    // ebo: gl::Buffer,
+    vbo: gl::Buffer,
+    ebo: gl::Buffer,
     vertex_array: gl::VertexArray,
     vertex_count: i32,
     model_matrix: Mat4,
@@ -39,7 +39,7 @@ pub struct ModelCreateInfo {
     pub shader_program: Rc<ShaderProgram>,
 }
 
-struct AttributeDescription {
+pub struct AttributeDescription {
     pub location: u32,
     pub components: i32,
     pub data_type: gl::VertexAttribPointerType,
@@ -48,6 +48,7 @@ struct AttributeDescription {
 }
 
 pub trait IModel {
+    fn shader_program() -> Rc<ShaderProgram>;
     fn attribute_descriptions() -> Vec<AttributeDescription>;
 }
 
@@ -63,16 +64,26 @@ impl Model {
 
         let vertex_count = (polygons.len() * 3) as i32;
 
-        let mut vertex_array = gl::VertexArray::gen1();
-        let mut array_buffer = gl::Buffer::gen1();
-        let mut element_buffer = gl::Buffer::gen1();
-
+        let mut vertex_array = gl::VertexArray::create1();
         vertex_array.bind();
-        array_buffer.bind(gl::BufferTarget::ArrayBuffer);
-        element_buffer.bind(gl::BufferTarget::ElementArrayBuffer);
 
-        array_buffer.storage(vertices, gl::BufferUsage::StaticDraw);
-        element_buffer.storage(polygons, gl::BufferUsage::StaticDraw);
+        let mut vertex_buffer = gl::Buffer::gen1();
+        vertex_buffer.bind(gl::BufferTarget::ArrayBuffer);
+        gl::buffer_data(
+            gl::BufferTarget::ArrayBuffer,
+            vertices,
+            gl::BufferUsage::StaticDraw,
+        );
+        // vertex_buffer.storage(vertices, gl::BufferUsage::StaticDraw);
+
+        let mut index_buffer = gl::Buffer::gen1();
+        index_buffer.bind(gl::BufferTarget::ElementArrayBuffer);
+        gl::buffer_data(
+            gl::BufferTarget::ElementArrayBuffer,
+            polygons,
+            gl::BufferUsage::StaticDraw,
+        );
+        // index_buffer.storage(polygons, gl::BufferUsage::StaticDraw);
 
         let attribute_descriptions = Self::default_attribute_descriptions();
 
@@ -94,8 +105,8 @@ impl Model {
         let camera_location = shader_program.uniform_location("camera");
 
         Self {
-            // vbo: array_buffer,
-            // ebo: element_buffer,
+            vbo: vertex_buffer,
+            ebo: index_buffer,
             vertex_array,
             texture,
             vertex_count,

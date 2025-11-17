@@ -37,7 +37,7 @@ impl Shader {
         shader.binary(binary);
         shader.specialize("main", &[])?;
 
-        unimplemented!("SPIR-V shader creation is not implemented yet.");
+        Ok(Self { shader })
     }
 
     pub fn shader(&self) -> &gl::Shader {

@@ -34,43 +34,12 @@ impl KEngine {
 
         gl::load_fns(|s| window.get_proc_address(s)).unwrap();
 
-        unsafe {
-            gl::viewport(0, 0, width as i32, height as i32);
-        }
-
         let archive = EngineArchive::new("base").expect("Failed to load base archive");
 
         let shader_program = create_shader_program().map_err(|e| anyhow!(e))?;
         let shader_program = Rc::new(shader_program);
 
-        let main_texture = Texture::from(TextureCreateInfo {
-            rgba_image: load_image_from_archive(&archive, "container2.png")?,
-            internal_format: gl::BaseInternalFormat::RGBA,
-            mip_level: 0,
-            wrap_s: gl::TextureWrapMode::Repeat,
-            wrap_t: gl::TextureWrapMode::Repeat,
-            min_filter: gl::InterpolationMode::Linear,
-            mag_filter: gl::InterpolationMode::Nearest,
-            mipmap_interpolation: Some(gl::InterpolationMode::Linear),
-        });
-        let main_texture = Rc::new(main_texture);
-
-        let model = Self::load_cube(shader_program.clone(), main_texture.clone());
-
-        let camera = Camera::from(CameraCreateInfo {
-            camera_type: CameraType::Perspective {
-                fov: 90.0,
-                aspect: 16.0 / 9.0,
-            },
-            far: 1000.0,
-            near: 0.01,
-            position: glm::vec3(0.0, 0.0, 0.0),
-        });
-
-        let scene = Scene::from(SceneCreateInfo {
-            models: vec![model],
-            camera,
-        });
+        let scene = load_scene(&archive, shader_program)?;
 
         Ok(KEngine {
             archive,
@@ -158,83 +127,116 @@ impl KEngine {
         self.scene.render();
         self.window.swap_window();
     }
+}
 
-    fn load_cube(shader_program: Rc<ShaderProgram>, texture: Rc<Texture>) -> Model {
-        let vertices = vec![
-            Vertex {
-                position: [-1.0, -1.0, 1.0],
-                color: [0.0, 0.0, 1.0],
-                tex_coords: [0.0, 1.0],
-            },
-            Vertex {
-                position: [-1.0, 1.0, 1.0],
-                color: [0.0, 1.0, 1.0],
-                tex_coords: [0.0, 0.0],
-            },
-            Vertex {
-                position: [1.0, 1.0, 1.0],
-                color: [1.0, 1.0, 1.0],
-                tex_coords: [1.0, 0.0],
-            },
-            Vertex {
-                position: [1.0, -1.0, 1.0],
-                color: [1.0, 0.0, 1.0],
-                tex_coords: [1.0, 1.0],
-            },
-            Vertex {
-                position: [-1.0, -1.0, -1.0],
-                color: [0.0, 0.0, 0.0],
-                tex_coords: [0.0, 0.0],
-            },
-            Vertex {
-                position: [-1.0, 1.0, -1.0],
-                color: [0.0, 1.0, 0.0],
-                tex_coords: [0.0, 1.0],
-            },
-            Vertex {
-                position: [1.0, 1.0, -1.0],
-                color: [1.0, 1.0, 0.0],
-                tex_coords: [1.0, 1.0],
-            },
-            Vertex {
-                position: [1.0, -1.0, -1.0],
-                color: [1.0, 0.0, 0.0],
-                tex_coords: [1.0, 0.0],
-            },
-        ];
+fn load_cube(shader_program: Rc<ShaderProgram>, texture: Rc<Texture>) -> Model {
+    let vertices = vec![
+        Vertex {
+            position: [-1.0, -1.0, 1.0],
+            color: [0.0, 0.0, 1.0],
+            tex_coords: [0.0, 1.0],
+        },
+        Vertex {
+            position: [-1.0, 1.0, 1.0],
+            color: [0.0, 1.0, 1.0],
+            tex_coords: [0.0, 0.0],
+        },
+        Vertex {
+            position: [1.0, 1.0, 1.0],
+            color: [1.0, 1.0, 1.0],
+            tex_coords: [1.0, 0.0],
+        },
+        Vertex {
+            position: [1.0, -1.0, 1.0],
+            color: [1.0, 0.0, 1.0],
+            tex_coords: [1.0, 1.0],
+        },
+        Vertex {
+            position: [-1.0, -1.0, -1.0],
+            color: [0.0, 0.0, 0.0],
+            tex_coords: [0.0, 0.0],
+        },
+        Vertex {
+            position: [-1.0, 1.0, -1.0],
+            color: [0.0, 1.0, 0.0],
+            tex_coords: [0.0, 1.0],
+        },
+        Vertex {
+            position: [1.0, 1.0, -1.0],
+            color: [1.0, 1.0, 0.0],
+            tex_coords: [1.0, 1.0],
+        },
+        Vertex {
+            position: [1.0, -1.0, -1.0],
+            color: [1.0, 0.0, 0.0],
+            tex_coords: [1.0, 0.0],
+        },
+    ];
 
-        let polygons = vec![
-            Polygon { indices: [0, 1, 2] },
-            Polygon { indices: [2, 3, 0] },
-            Polygon { indices: [4, 5, 6] },
-            Polygon { indices: [6, 7, 4] },
-            Polygon { indices: [0, 4, 7] },
-            Polygon { indices: [7, 3, 0] },
-            Polygon { indices: [1, 5, 6] },
-            Polygon { indices: [6, 2, 1] },
-            Polygon { indices: [1, 0, 4] },
-            Polygon { indices: [4, 5, 1] },
-            Polygon { indices: [3, 2, 6] },
-            Polygon { indices: [6, 7, 3] },
-        ];
+    let polygons = vec![
+        Polygon { indices: [0, 1, 2] },
+        Polygon { indices: [2, 3, 0] },
+        Polygon { indices: [4, 5, 6] },
+        Polygon { indices: [6, 7, 4] },
+        Polygon { indices: [0, 4, 7] },
+        Polygon { indices: [7, 3, 0] },
+        Polygon { indices: [1, 5, 6] },
+        Polygon { indices: [6, 2, 1] },
+        Polygon { indices: [1, 0, 4] },
+        Polygon { indices: [4, 5, 1] },
+        Polygon { indices: [3, 2, 6] },
+        Polygon { indices: [6, 7, 3] },
+    ];
 
-        let create_info = ModelCreateInfo {
-            vertices,
-            polygons,
-            model_matrix: glm::identity(),
-            shader_program,
-            texture,
-        };
+    let create_info = ModelCreateInfo {
+        vertices,
+        polygons,
+        model_matrix: glm::identity(),
+        shader_program,
+        texture,
+    };
 
-        Model::new(create_info)
-    }
+    Model::new(create_info)
+}
+
+fn load_scene(archive: &EngineArchive, shader_program: Rc<ShaderProgram>) -> Result<Scene> {
+    let main_texture = Texture::from(TextureCreateInfo {
+        rgba_image: load_image_from_archive(archive, "container2.png")?,
+        internal_format: gl::BaseInternalFormat::RGBA,
+        mip_level: 0,
+        wrap_s: gl::TextureWrapMode::Repeat,
+        wrap_t: gl::TextureWrapMode::Repeat,
+        min_filter: gl::InterpolationMode::Linear,
+        mag_filter: gl::InterpolationMode::Nearest,
+        mipmap_interpolation: Some(gl::InterpolationMode::Linear),
+    });
+    let main_texture = Rc::new(main_texture);
+
+    let model = load_cube(shader_program, main_texture.clone());
+
+    let camera = Camera::from(CameraCreateInfo {
+        camera_type: CameraType::Perspective {
+            fov: 90.0,
+            aspect: 16.0 / 9.0,
+        },
+        far: 1000.0,
+        near: 0.01,
+        position: glm::vec3(0.0, 0.0, 0.0),
+    });
+
+    let scene = Scene::from(SceneCreateInfo {
+        models: vec![model],
+        camera,
+    });
+
+    Ok(scene)
 }
 
 fn create_shader_program() -> Result<ShaderProgram, String> {
-    let vertex = include_bytes!("shaders/vertex.spv");
-    let fragment = include_bytes!("shaders/fragment.spv");
+    let vertex = include_str!("shaders/vertex.vert");
+    let fragment = include_str!("shaders/fragment.frag");
 
-    ShaderProgram::new(ShaderCode::SPIRV(vertex), ShaderCode::SPIRV(fragment))
+    ShaderProgram::new(ShaderCode::GLSL(vertex), ShaderCode::GLSL(fragment))
 }
 
 fn load_image_from_archive(

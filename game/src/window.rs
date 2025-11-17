@@ -1,3 +1,5 @@
+use std::ffi::c_void;
+
 pub struct KWindow {
     sdl_context: sdl2::Sdl,
     _sdl_video: sdl2::VideoSubsystem,
@@ -46,7 +48,7 @@ impl KWindow {
         }
     }
 
-    pub fn get_proc_address(&self, s: &str) -> *const std::ffi::c_void {
+    pub fn get_proc_address(&self, s: &str) -> *const c_void {
         self._sdl_video.gl_get_proc_address(s) as _
     }
 

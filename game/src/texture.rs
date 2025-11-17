@@ -30,27 +30,26 @@ impl From<TextureCreateInfo> for Texture {
             mipmap_interpolation,
         } = info;
 
-        let mut texture = gl::Texture::create1(TextureTarget::Texture2D);
+        let mut texture = gl::Texture::gen1();
+        texture.bind(TextureTarget::Texture2D);
+        unsafe { gl::active_texture(0) };
         texture.parameter_i_wrap_s(wrap_s);
         texture.parameter_i_wrap_t(wrap_t);
         texture.parameter_i_mag_filter(mag_filter);
         texture.parameter_i_min_filter(min_filter, mipmap_interpolation);
 
-        texture.storage_2d(
-            1,
-            internal_format,
-            rgba_image.width() as i32,
-            rgba_image.height() as i32,
-        );
-
-        texture.sub_image_2d(
-            mip_level,
-            (0, 0),
-            (rgba_image.width() as i32, rgba_image.height() as i32),
-            gl::PixelDataFormat::RGBA,
-            gl::PixelDataType::UnsignedByte,
-            rgba_image.as_ptr(),
-        );
+        unsafe {
+            gl::tex_image_2d(
+                TextureTarget::Texture2D,
+                mip_level,
+                internal_format,
+                rgba_image.width() as i32,
+                rgba_image.height() as i32,
+                gl::PixelDataFormat::RGBA,
+                gl::PixelDataType::UnsignedByte,
+                rgba_image.as_ptr(),
+            )
+        }
 
         texture.generate_mipmap();
 
