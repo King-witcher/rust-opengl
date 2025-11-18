@@ -5,12 +5,14 @@ use std::{
 };
 
 mod buffer;
+mod debug;
 mod shader;
 mod shader_program;
 mod texture;
 mod vertex_array;
 
 pub use buffer::*;
+pub use debug::*;
 pub use shader::*;
 pub use shader_program::*;
 pub use texture::*;
@@ -173,93 +175,5 @@ pub fn blend_func(sfactor: BlendFactor, dfactor: BlendFactor) {
 pub fn clear_color(r: f32, g: f32, b: f32, a: f32) {
     unsafe {
         gl().ClearColor(r, g, b, a);
-    }
-}
-
-pub struct DebugMessageSource(u32);
-impl DebugMessageSource {
-    pub const API: Self = Self(gl46::GL_DEBUG_SOURCE_API.0);
-    pub const WINDOW_SYSTEM: Self = Self(gl46::GL_DEBUG_SOURCE_WINDOW_SYSTEM.0);
-    pub const SHADER_COMPILER: Self = Self(gl46::GL_DEBUG_SOURCE_SHADER_COMPILER.0);
-    pub const THIRD_PARTY: Self = Self(gl46::GL_DEBUG_SOURCE_THIRD_PARTY.0);
-    pub const APPLICATION: Self = Self(gl46::GL_DEBUG_SOURCE_APPLICATION.0);
-    pub const OTHER: Self = Self(gl46::GL_DEBUG_SOURCE_OTHER.0);
-}
-
-pub struct DebugMessageType(u32);
-impl DebugMessageType {
-    pub const ERROR: Self = Self(gl46::GL_DEBUG_TYPE_ERROR.0);
-    pub const DEPRECATED_BEHAVIOR: Self = Self(gl46::GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR.0);
-    pub const UNDEFINED_BEHAVIOR: Self = Self(gl46::GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR.0);
-    pub const PORTABILITY: Self = Self(gl46::GL_DEBUG_TYPE_PORTABILITY.0);
-    pub const PERFORMANCE: Self = Self(gl46::GL_DEBUG_TYPE_PERFORMANCE.0);
-    pub const OTHER: Self = Self(gl46::GL_DEBUG_TYPE_OTHER.0);
-    pub const MARKER: Self = Self(gl46::GL_DEBUG_TYPE_MARKER.0);
-}
-
-pub struct DebugMessageSeverity(u32);
-impl DebugMessageSeverity {
-    pub const HIGH: Self = Self(gl46::GL_DEBUG_SEVERITY_HIGH.0);
-    pub const MEDIUM: Self = Self(gl46::GL_DEBUG_SEVERITY_MEDIUM.0);
-    pub const LOW: Self = Self(gl46::GL_DEBUG_SEVERITY_LOW.0);
-    pub const NOTIFICATION: Self = Self(gl46::GL_DEBUG_SEVERITY_NOTIFICATION.0);
-}
-
-impl Display for DebugMessageSeverity {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self.0 {
-            x if x == gl46::GL_DEBUG_SEVERITY_HIGH.0 => "HIGH",
-            x if x == gl46::GL_DEBUG_SEVERITY_MEDIUM.0 => "MEDIUM",
-            x if x == gl46::GL_DEBUG_SEVERITY_LOW.0 => "LOW",
-            x if x == gl46::GL_DEBUG_SEVERITY_NOTIFICATION.0 => "NOTIFICATION",
-            _ => "UNKNOWN",
-        };
-        write!(f, "{}", s)
-    }
-}
-
-pub type DebugMessageCallback = fn(
-    source: DebugMessageSource,
-    r#type: DebugMessageType,
-    id: u32,
-    severity: DebugMessageSeverity,
-    message: &str,
-    user_param: *const (),
-) -> ();
-
-pub fn debug_message_callback(callback: Option<DebugMessageCallback>, user_param: *const ()) {
-    static mut CALLBACK: Option<DebugMessageCallback> = None;
-
-    unsafe extern "system" fn middleware(
-        source: GLenum,
-        r#type: GLenum,
-        id: u32,
-        severity: GLenum,
-        message_size: i32,
-        message: *const u8,
-        user_param: *const c_void,
-    ) {
-        unsafe {
-            let slice = std::slice::from_raw_parts(message, message_size as usize);
-            let str = std::str::from_utf8(slice).unwrap();
-
-            CALLBACK.expect("Debug message callback not set")(
-                DebugMessageSource(source.0),
-                DebugMessageType(r#type.0),
-                id,
-                DebugMessageSeverity(severity.0),
-                str,
-                user_param.cast(),
-            );
-        }
-    }
-
-    unsafe {
-        let Some(callback) = callback else {
-            gl().DebugMessageCallback(None, std::ptr::null());
-            return;
-        };
-        CALLBACK = Some(callback);
-        gl().DebugMessageCallback(Some(middleware), user_param.cast());
     }
 }
