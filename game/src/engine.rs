@@ -33,9 +33,11 @@ impl KEngine {
         });
 
         gl::load_fns(|s| window.get_proc_address(s)).unwrap();
-        gl::enable(Capability::DebugOutput);
-        gl::enable(Capability::DebugOutputSynchronous);
-        gl::debug_message_callback(Some(debug_callback), 0);
+        if cfg!(debug_assertions) {
+            gl::enable(Capability::DebugOutput);
+            gl::enable(Capability::DebugOutputSynchronous);
+            gl::debug_message_callback(Some(debug_callback), 0);
+        }
 
         let archive = EngineArchive::new("base").expect("Failed to load base archive");
 
@@ -135,7 +137,7 @@ impl KEngine {
 fn debug_callback(
     source: gl::DebugMessageSource,
     r#type: gl::DebugMessageType,
-    id: u32,
+    _: u32,
     severity: gl::DebugMessageSeverity,
     message: &str,
     _: isize,

@@ -30,9 +30,8 @@ impl From<TextureCreateInfo> for Texture {
             mipmap_interpolation,
         } = info;
 
-        let mut texture = gl::Texture::gen1();
-        texture.bind(TextureTarget::Texture2D);
-        unsafe { gl::active_texture(0) };
+        let mut texture = gl::Texture::create1(TextureTarget::Texture2D);
+        texture.bind_unit(0);
         texture.parameter_i_wrap_s(wrap_s);
         texture.parameter_i_wrap_t(wrap_t);
         texture.parameter_i_mag_filter(mag_filter);
@@ -59,7 +58,7 @@ impl From<TextureCreateInfo> for Texture {
 
 impl Texture {
     pub fn bind_to_unit(&self, unit: u32) {
-        self.texture.bind_texture_unit(unit);
+        self.texture.bind_unit(unit);
     }
 
     pub fn id(&self) -> u32 {

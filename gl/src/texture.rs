@@ -175,7 +175,7 @@ impl Texture {
     }
 
     #[inline]
-    pub fn bind_texture_unit(&self, unit: u32) {
+    pub fn bind_unit(&self, unit: u32) {
         unsafe {
             gl().BindTextureUnit(unit, self.0);
         }
