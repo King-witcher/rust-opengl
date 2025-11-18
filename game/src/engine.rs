@@ -233,10 +233,10 @@ fn load_scene(archive: &EngineArchive, shader_program: Rc<ShaderProgram>) -> Res
 }
 
 fn create_shader_program() -> Result<ShaderProgram, String> {
-    let vertex = include_str!("shaders/vertex.vert");
-    let fragment = include_str!("shaders/fragment.frag");
+    let vertex = include_bytes!("shaders/glsl_vertex.spv");
+    let fragment = include_bytes!("shaders/glsl_fragment.spv");
 
-    ShaderProgram::new(ShaderCode::GLSL(vertex), ShaderCode::GLSL(fragment))
+    ShaderProgram::new(ShaderCode::SPIRV(vertex), ShaderCode::SPIRV(fragment))
 }
 
 fn load_image_from_archive(

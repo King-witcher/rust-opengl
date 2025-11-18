@@ -23,16 +23,14 @@ impl ShaderProgram {
         gl().AttachShader(self.id(), shader.id());
     }
 
-    pub fn link(&mut self) -> Result<(), String> {
+    pub fn link(&mut self) {
         let gl = gl();
         gl.LinkProgram(self.id());
 
         if self.get_iv(gl46::GL_LINK_STATUS.0) == 0 {
             let log = self.get_info_log();
-            return Err(log);
+            panic!("Shader Program linking failed: {}", log);
         }
-
-        Ok(())
     }
 
     pub fn r#use(&self) {
@@ -64,11 +62,18 @@ impl ShaderProgram {
 
     #[inline]
     pub fn get_info_log(&self) -> String {
+        const BUFFER_SIZE: usize = 512;
         let gl = gl();
         let mut len = 0;
-        unsafe { gl.GetProgramInfoLog(self.id(), 0, &mut len, std::ptr::null_mut()) };
-        let mut buffer = vec![0u8; len as usize];
-        unsafe { gl.GetProgramInfoLog(self.id(), len, &mut len, buffer.as_mut_ptr()) };
+        let mut buffer = [0u8; BUFFER_SIZE];
+        unsafe {
+            gl.GetProgramInfoLog(
+                self.id(),
+                BUFFER_SIZE as i32,
+                &mut len,
+                &mut buffer as *mut _,
+            )
+        };
         String::from_utf8_lossy(&buffer[..len as usize]).to_string()
     }
 

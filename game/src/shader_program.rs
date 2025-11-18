@@ -11,14 +11,14 @@ pub struct ShaderProgram {
 
 impl ShaderProgram {
     pub fn new(vertex: ShaderCode, fragment: ShaderCode) -> Result<Self, String> {
-        let vertex_shader = Shader::new(vertex, gl::ShaderType::Vertex)?;
-        let fragment_shader = Shader::new(fragment, gl::ShaderType::Fragment)?;
+        let vertex_shader = Shader::new(vertex, gl::ShaderType::Vertex);
+        let fragment_shader = Shader::new(fragment, gl::ShaderType::Fragment);
 
         let mut program = gl::ShaderProgram::create();
 
         program.attach_shader(vertex_shader.into());
         program.attach_shader(fragment_shader.into());
-        program.link()?;
+        program.link();
 
         Ok(Self { program })
     }

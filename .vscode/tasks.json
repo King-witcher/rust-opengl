@@ -75,7 +75,7 @@
       },
       "type": "shell",
       "group": "build",
-      "command": "./compile_shaders.sh",
+      "command": "./glslc.sh",
       "problemMatcher": {
         "owner": "glslc",
         "fileLocation": ["relative", "${workspaceFolder}"],
@@ -108,7 +108,7 @@
       },
       "group": "build",
       "dependsOrder": "sequence",
-      "dependsOn": ["slangc: compile", "cargo build: debug"],
+      "dependsOn": ["glslc: compile", "cargo build: debug"],
     },
 
     {
@@ -119,7 +119,7 @@
       },
       "group": "build",
       "dependsOrder": "sequence",
-      "dependsOn": ["slangc: compile", "cargo build: release"],
+      "dependsOn": ["glslc: compile", "cargo build: release"],
     },
   ]
 }

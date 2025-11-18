@@ -6,10 +6,10 @@ PURPLE="\e[0;35m"
 NC="\e[0m"
 
 # Remove existing .spv files
-spvs=$(find . -name '*.spv')
-for spv in $spvs; do
-  rm "$spv"
-done
+# spvs=$(find . -name '*.spv')
+# for spv in $spvs; do
+#   rm "$spv"
+# done
 
 function compile {
   local file_path="$1"
@@ -24,17 +24,17 @@ function compile {
     -emit-spirv-directly     \
     -fvk-use-entrypoint-name \
     -entry main              \
-    -o "$dir/$basename.spv"
+    -o "$dir/slang_${basename}.spv"
 
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}[SUCCESS]${NC} $file_path -> ${PURPLE}$basename.spv${NC}"
+    echo -e "${GREEN}[SUCCESS]${NC} $file_path -> ${PURPLE}slang_${basename}.spv${NC}"
   else
     echo -e "${RED}[FAILED]${NC} $file_path${NC}"
   fi
 }
 
 # Compile .slang files to .spv
-echo -e "${PURPLE}Compiling .slang files to .spv...${NC}"
+echo -e "${PURPLE}SLANGC: compiling...${NC}"
 shaders=$(find . -name '*.slang')
 for shader in $shaders; do
   compile $shader

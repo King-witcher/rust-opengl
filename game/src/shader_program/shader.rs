@@ -17,27 +17,27 @@ pub enum ShaderCode<'a> {
 }
 
 impl Shader {
-    pub fn new(code: ShaderCode, shader_type: gl::ShaderType) -> Result<Self, String> {
+    pub fn new(code: ShaderCode, shader_type: gl::ShaderType) -> Self {
         match code {
             ShaderCode::GLSL(source) => Self::from_glsl(source, shader_type),
             ShaderCode::SPIRV(binary) => Self::from_spirv(binary, shader_type),
         }
     }
 
-    pub fn from_glsl(source: &str, shader_type: gl::ShaderType) -> Result<Self, String> {
+    pub fn from_glsl(source: &str, shader_type: gl::ShaderType) -> Self {
         let mut shader = gl::Shader::create(shader_type);
         shader.source(&[source]);
-        shader.compile()?;
+        shader.compile();
 
-        Ok(Self { shader })
+        Self { shader }
     }
 
-    pub fn from_spirv(binary: &[u8], shader_type: gl::ShaderType) -> Result<Self, String> {
+    pub fn from_spirv(binary: &[u8], shader_type: gl::ShaderType) -> Self {
         let mut shader = gl::Shader::create(shader_type);
         shader.binary(binary);
-        shader.specialize("main", &[])?;
+        shader.specialize("main", &[]);
 
-        Ok(Self { shader })
+        Self { shader }
     }
 
     pub fn shader(&self) -> &gl::Shader {

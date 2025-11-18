@@ -1,6 +1,6 @@
 use std::ffi::CString;
 
-use gl46::{GL_SHADER_BINARY_FORMAT_SPIR_V, GL_SPIR_V_BINARY, GLenum};
+use gl46::{GLenum, GL_SHADER_BINARY_FORMAT_SPIR_V, GL_SPIR_V_BINARY};
 
 use super::gl;
 
@@ -57,27 +57,22 @@ impl Shader {
         };
     }
 
-    pub fn compile(&mut self) -> Result<(), String> {
+    pub fn compile(&mut self) {
         let gl = gl();
         gl.CompileShader(self.id());
 
         if self.get_iv(gl46::GL_COMPILE_STATUS.0) == 0 {
             let log = self.get_info_log();
-            return Err(log);
+            panic!("Shader compilation failed: {}", log);
         }
-
-        Ok(())
     }
 
-    pub fn specialize(
-        &mut self,
-        entry_point: &str,
-        specialization_constants: &[(u32, u32)],
-    ) -> Result<(), String> {
+    pub fn specialize(&mut self, entry_point: &str, specialization_constants: &[(u32, u32)]) {
         let gl = gl();
 
-        let c_entry =
-            CString::new(entry_point).map_err(|_| "Illegal null byte in entry point name.")?;
+        let c_entry = CString::new(entry_point)
+            .map_err(|_| "Illegal null byte in entry point name.")
+            .expect("Failed to create CString.");
 
         let constant_indexes = specialization_constants
             .iter()
@@ -101,10 +96,8 @@ impl Shader {
 
         if self.get_iv(GL_SPIR_V_BINARY.0) == 0 {
             let log = self.get_info_log();
-            return Err(log);
+            panic!("Shader specialization failed: {}", log);
         }
-
-        Ok(())
     }
 
     #[inline]
